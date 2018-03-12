@@ -1,0 +1,9 @@
+[package]
+name = "image-black"
+version = "0.1.0"
+authors = ["elbaro <elbaro@github>"]
+
+[dependencies]
+image = "*"
+walkdir = "2"
+clap = "*"
