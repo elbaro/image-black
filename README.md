@@ -2,12 +2,19 @@
 
 A toolbox for images clean-up
 
-```sh
-./image-black [mode] (arguments) [source dir] (dest dir)
+1. Choose action (count, convert, list)
+2. Choose filters (filesize>10M, png)
+3. (Optional) For convert, list what you want targets (rgb, width=512)
 
-./image-black convert jpg .
-./image-black convert rgb jpg .
-./image-black convert long=512 .
+```sh
+./image-black [mode] [filter] [filter] .. [source dir]
+./image-black convert [filter] [filter] .. to [target] [target] .. [source dir] [dest dir]
+./image-black convert [filter] [filter] .. into [target] [target] .. [source dir]
+
+./image-black convert jpg   to rgb     dir1 dir2
+./image-black convert jpg into rgb     dir1 dir2
+./image-black convert rgb jpg to png dir1 dir2
+./image-black convert width<128 to long=512 png dir1 dir2
 ./image-black count channel .
 ./image-black count gray .
 ./image-black remove filesize>10M .
@@ -16,16 +23,14 @@ A toolbox for images clean-up
 
 
 
-|         | valid          | channel         | format                 | filesize                   | dim                                             | quality (WIP)      |      |
-| ------- | -------------- | --------------- | ---------------------- | -------------------------- | ----------------------------------------------- | ------------------ | ---- |
-|         | valid, invalid | rgb, rgba, gray | png, jpg (covers jpeg) | filesize, 50B, 300K, 10.5M | width, height, long, short, =, ==, >, <, >=, <= | q=1, q=2, .. q=100 |      |
-| any     |                | any RGBA        | any png                |                            |                                                 |                    |      |
-| list    |                | list rgba       |                        |                            |                                                 |                    |      |
-| count   |                | count           | count format           | count filesize>10M         | count short>=512                                |                    |      |
-| remove  |                |                 |                        |                            | remove width<512                                |                    |      |
-| convert |                |                 | convert  jpg           |                            | convert long=512                                |                    |      |
-| move    |                |                 |                        |                            |                                                 |                    |      |
-| copy    |                |                 |                        |                            |                                                 |                    |      |
+|         | valid          | channel         | format                 | filesize                   | dim                                             | quality (WIP)                 | aspect               |
+| ------- | -------------- | --------------- | ---------------------- | -------------------------- | ----------------------------------------------- | ----------------------------- | -------------------- |
+|         | valid, invalid | rgb, rgba, gray | png, jpg (covers jpeg) | filesize, 50B, 300K, 10.5M | width, height, long, short, =, ==, >, <, >=, <= | q, >, >=, <, <=, =, ==, 1~100 | aspect, >, >=, <, <= |
+| any     |                | any RGBA        | any png                |                            |                                                 |                               |                      |
+| list    |                | list rgba       |                        |                            |                                                 | list q<80                     |                      |
+| count   |                | count           | count format           | count filesize>10M         | count short>=512                                |                               |                      |
+| remove  |                |                 |                        |                            | remove width<512 height==100                    |                               | -                    |
+| convert |                |                 | convert  jpg           |                            | convert long=512                                |                               |                      |
 
 
 

@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["elbaro <elbaro@github>"]
 
 [dependencies]
+rayon = "*"
 image = "*"
 walkdir = "2"
-clap = "*"
+indicatif = {git = "https://github.com/mitsuhiko/indicatif.git"}
+regex = "1"
+lazy_static = "*"
+derivative = "*"
+atomic-counter = "*"
