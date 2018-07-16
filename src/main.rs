@@ -315,8 +315,8 @@ fn main() {
         }
     });
 
-    let require_content = filters.iter().any(|filter| {
-        mode == "convert" ||
+    let require_content = mode == "convert" ||
+        filters.iter().any(|filter| {
             match filter {
                 Filter::ContentFilter(_, _) => true,
                 _ => false
@@ -367,13 +367,13 @@ fn main() {
             it.for_each(|info| {
                 if filter_fn(&info) {
                     let _guard = lock.lock();
-                    println!("{:?}", info.path)
+                    bar.println(info.path.to_str().unwrap())
                 }
             })
         }
         "count" => {
             let n = it.filter(filter_fn).count();
-            println!("{} matches.", n);
+            bar.println(format!("{} matches.", n));
         }
         "remove" => {
             it.filter(filter_fn).for_each(|info| {
