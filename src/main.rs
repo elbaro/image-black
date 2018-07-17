@@ -421,6 +421,12 @@ fn main() {
                 } else {
                     parse_transform(&args[convert_sep + 1..args.len() - 1])
                 };
+            let require_meta = require_meta ||
+                t.long.is_some() ||
+                t.short.is_some() ||
+                t.width.is_some() ||
+                t.height.is_some() ||
+                t.both.is_some();
 
             it.filter(filter_fn).for_each(|info| {
                 let mut img = info.image.as_ref().unwrap().clone();

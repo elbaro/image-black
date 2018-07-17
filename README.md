@@ -28,7 +28,7 @@ A CLI tool for image dataset clean-up
 |         |      | rgb, rgba, gray | png, jpg (covers jpeg) | filesize, 50B, 300K, 10.5M | width, height, long, short, =, ==, >, <, >=, <= | q, >, >=, <, <=, =, ==, 1~100 | aspect, >, >=, <, <= |
 | any     |      | any RGBA        | any png                |                            |                                                 |                               |                      |
 | list    |      | list rgba       |                        |                            |                                                 | list q<80                     |                      |
-| count   |      | count           | count format           | count "filesize>10M"       | count "short>=512"                              |                               |                      |
+| count   |      | count !rgb      | count format           | count "filesize>10M"       | count "short>=512"                              |                               |                      |
 | remove  |      | remove gray     | remove !png !jpg       |                            | remove "width<512" height==100                  |                               | -                    |
 | convert |      |                 | convert jpg into png   |                            | convert long=512                                |                               |                      |
 
@@ -65,7 +65,7 @@ image-black count [conditions..] source_dir
 image-black count [attr] source_dir
 ```
 
-Count the files with the condition, or report the statistics for the attribute.
+pyCount the files with the condition, or report the statistics for the attribute.
 
 ### remove
 
@@ -86,6 +86,26 @@ does not remove the original files.
 filesize cannot be used.
 
 dim inequality cannot be used.
+
+
+
+## Example Pipeline for HQ Face images
+
+1. Basic
+   1. Crawl images
+   2. `image-black remove "filesize>10M"` (overbloated)
+   3. `image-black remove "short<512"` (too small)
+   4. `image-black convert to rgb` or `image-black remove gray`  (default jpeg q = 75)
+2. Crop: SFD
+   1. Run SFD
+   2. Use the threshold score > 0.
+   3. exclude :overlapping faces
+   4. exclude: bbox touching the image boundary
+   5. Save only when `short>=128`
+3. NIMA
+4. 
+
+
 
 ## Golang?
 
