@@ -13,6 +13,7 @@ extern crate colored;
 use rayon::prelude::*;
 use walkdir::WalkDir;
 use image::DynamicImage;
+use image::GenericImage;
 use std::path::PathBuf;
 use std::path::Path;
 use std::error::Error;
@@ -354,33 +355,44 @@ fn main() {
     let logfile_mutex = std::sync::Mutex::new(std::fs::File::create(&logfile_path).expect("fail to create an error log"));
 
     let it = files.par_iter().filter_map(|p| -> Option<ImageInfo> {
-        Some(ImageInfo {
-            path: p,
-            meta: if require_meta {
-                match read_metadata(p) {
-                    Ok(meta) => Some(meta),
+        Some(
+            if require_content {
+                let img = match image::open(p) {
+                    Ok(img) => img,
                     Err(e) => {
                         writeln!(logfile_mutex.lock().unwrap(), "[error] {} {}", p.display(), e).unwrap();
                         stat_fail.inc();
                         return None
+                    }
+                };
+                let dim = img.dimensions();
+                let color = img.color();
+                ImageInfo {
+                    path: p,
+                    meta: Some(Metadata{width:dim.0, height:dim.1, color:color}),
+                    image: Some(img),
+                }
+            } else if require_meta {
+                ImageInfo {
+                    path: p,
+                    meta: match read_metadata(p) {
+                        Ok(meta) => Some(meta),
+                        Err(e) => {
+                            writeln!(logfile_mutex.lock().unwrap(), "[error] {} {}", p.display(), e).unwrap();
+                            stat_fail.inc();
+                            return None
+                        },
                     },
+                    image: None,
                 }
             } else {
-                None
-            },
-            image: if require_content {
-                match image::open(p) {
-                    Ok(img) => Some(img),
-                    Err(e) => {
-                        writeln!(logfile_mutex.lock().unwrap(), "[error] {} {}", p.display(), e).unwrap();
-                        stat_fail.inc();
-                        return None
-                    },
+                ImageInfo {
+                    path: p,
+                    meta: None,
+                    image: None
                 }
-            } else {
-                None
-            },
-        })
+            }
+        )
     });
 
     match mode.as_ref() {
@@ -396,10 +408,8 @@ fn main() {
             };
         }
         "list" => {
-            // let lock = std::sync::Mutex::new(0_u32);
             it.for_each(|info| {
                 if filter_fn(&info) {
-                    // let _guard = lock.lock();
                     bar.println(info.path.to_str().unwrap())
                 }
             })
@@ -421,12 +431,6 @@ fn main() {
                 } else {
                     parse_transform(&args[convert_sep + 1..args.len() - 1])
                 };
-            let require_meta = require_meta ||
-                t.long.is_some() ||
-                t.short.is_some() ||
-                t.width.is_some() ||
-                t.height.is_some() ||
-                t.both.is_some();
 
             it.filter(filter_fn).for_each(|info| {
                 let mut img = info.image.as_ref().unwrap().clone();
