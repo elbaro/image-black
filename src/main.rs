@@ -27,9 +27,8 @@ Usage:
   image-black list    <filter>.. <src_dir>
   image-black count   <filter>.. <src_dir>
   image-black remove  <filter>.. <src_dir>
-  image-black convert <filter>.. to <target>.. <src_dir> <dst_dir>
-  image-black move    <filter>.. <src_dir> <dst_dir>
-  image-black copy    <filter>.. <src_dir> <dst_dir>
+  image-black convert <filter>.. to <transform>.. <src_dir> <dst_dir>
+  image-black convert <filter>.. into <transform>.. <src_dir>
 
 Filters:
   valid  image      : valid | invalid
@@ -40,8 +39,8 @@ Filters:
   jpeg   quality    : q==100 q<90 q>=80
   aspect ratio (w/h): aspect>2
 
-Targets:
-           channel: rgb | rgba | gray
+Transforms:
+           channel: rgb | rgba | gray | graya
            format : png | jpg
            dim    : long=512 short=128
            quality: q=90
@@ -324,6 +323,7 @@ fn main() {
     });
 
     let bar = indicatif::ProgressBar::new(stat_total as u64);
+    bar.set_style(indicatif::ProgressStyle::default_bar().template("{elapsed}/{eta} {wide_bar} {pos}/{len}"));
 
 
     let filter_fn = |info: &ImageInfo| {
@@ -373,7 +373,6 @@ fn main() {
         }
         "count" => {
             let n = it.filter(filter_fn).count();
-            bar.println(format!("{} matches.", n));
         }
         "remove" => {
             it.filter(filter_fn).for_each(|info| {
@@ -453,5 +452,5 @@ fn main() {
     }
     bar.finish();
 
-    println!("{} files matched", stat_matched.get());
+    println!("{} files matched.", stat_matched.get());
 }
