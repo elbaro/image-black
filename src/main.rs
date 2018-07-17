@@ -8,6 +8,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate derivative;
 extern crate atomic_counter;
+extern crate colored;
 
 use rayon::prelude::*;
 use walkdir::WalkDir;
@@ -18,6 +19,8 @@ use std::error::Error;
 use std::io::BufReader;
 use image::ImageDecoder;
 use atomic_counter::AtomicCounter;
+use colored::*;
+use std::io::Write;
 
 const USAGE: &'static str = "
 image-black
@@ -31,7 +34,6 @@ Usage:
   image-black convert <filter>.. into <transform>.. <src_dir>
 
 Filters:
-  valid  image      : valid | invalid
          channel    : rgb | rgba | gray
          format     : png | jpg
          filesize   : filesize>10.5M filesize==300K filesize<50B
@@ -115,6 +117,7 @@ fn is_jpg(path: &Path) -> bool { get_ext(path) == "jpg" }
 
 fn parse_filter(args: &[String]) -> Result<Vec<Filter>, Box<Error>> {
     println!("==========");
+
     Ok(args.iter().map(|arg| {
         println!("filter: {}", arg);
 
@@ -145,6 +148,7 @@ fn parse_filter(args: &[String]) -> Result<Vec<Filter>, Box<Error>> {
                     ">=" => u64::ge,
                     "<" => u64::lt,
                     "<=" => u64::le,
+                    "==" => u64::eq,
                     _ => panic!(format!("unknown operator: {}", arg))
                 };
 
@@ -287,8 +291,9 @@ fn main() {
     };
 
     let stat_total = files.len();
+    let stat_fail = atomic_counter::RelaxedCounter::new(0);
     let stat_matched = atomic_counter::RelaxedCounter::new(0);
-    println!("found {} files", stat_total);
+    println!("{} files found", format!("{}", stat_total).bright_green().bold());
 
 
     let mut convert_sep = 0;
@@ -308,7 +313,6 @@ fn main() {
     let require_meta = filters.iter().any(|filter| {
         match filter {
             Filter::MetaFilter(_, _) => true,
-            Filter::FilesizeFilter(_, _, _) => true,
             Filter::MetaIntCmpFilter(_, _, _, _) => true,
             _ => false
         }
@@ -340,14 +344,43 @@ fn main() {
         if m { stat_matched.inc(); }
         m
     };
-//    let convert_fn = parseConvert();
 
-    let it = files.par_iter().map(|p| {
-        ImageInfo {
+
+    let logfile_path = {
+        let mut p = std::env::temp_dir();
+        p.push("image-black.log");
+        p
+    };
+    let logfile_mutex = std::sync::Mutex::new(std::fs::File::create(&logfile_path).expect("fail to create an error log"));
+
+    let it = files.par_iter().filter_map(|p| -> Option<ImageInfo> {
+        Some(ImageInfo {
             path: p,
-            meta: if require_meta { Some(read_metadata(p).unwrap()) } else { None },
-            image: if require_content { Some(image::open(p).unwrap()) } else { None },
-        }
+            meta: if require_meta {
+                match read_metadata(p) {
+                    Ok(meta) => Some(meta),
+                    Err(e) => {
+                        writeln!(logfile_mutex.lock().unwrap(), "[error] {} {}", p.display(), e).unwrap();
+                        stat_fail.inc();
+                        return None
+                    },
+                }
+            } else {
+                None
+            },
+            image: if require_content {
+                match image::open(p) {
+                    Ok(img) => Some(img),
+                    Err(e) => {
+                        writeln!(logfile_mutex.lock().unwrap(), "[error] {} {}", p.display(), e).unwrap();
+                        stat_fail.inc();
+                        return None
+                    },
+                }
+            } else {
+                None
+            },
+        })
     });
 
     match mode.as_ref() {
@@ -363,16 +396,16 @@ fn main() {
             };
         }
         "list" => {
-            let lock = std::sync::Mutex::new(0_u32);
+            // let lock = std::sync::Mutex::new(0_u32);
             it.for_each(|info| {
                 if filter_fn(&info) {
-                    let _guard = lock.lock();
+                    // let _guard = lock.lock();
                     bar.println(info.path.to_str().unwrap())
                 }
             })
         }
         "count" => {
-            let n = it.filter(filter_fn).count();
+            it.filter(filter_fn).count();
         }
         "remove" => {
             it.filter(filter_fn).for_each(|info| {
@@ -435,8 +468,8 @@ fn main() {
                             } else {
                                 (((meta.width as f64) * (short as f64) / meta.height as f64) as u32, short)
                             }
-                        } else if let Some(both) = t.both {
-                            (0, 0)
+                        } else if let Some(_both) = t.both {
+                            unimplemented!()
                         } else {
                             unreachable!()
                         };
@@ -452,5 +485,11 @@ fn main() {
     }
     bar.finish();
 
-    println!("{} files matched.", stat_matched.get());
+    println!("{} files matched.", format!("{}",stat_matched.get()).bright_green().bold());
+
+    let fail = stat_fail.get();
+    if fail > 0 {
+        println!("{} files failed to read", format!("{}", fail).bright_red().bold());
+        println!("see the error log in {}", logfile_path.display());
+    }
 }

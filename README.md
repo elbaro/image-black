@@ -23,14 +23,14 @@ A CLI tool for image dataset clean-up
 ./image-black remove "filesize>10M" .
 ```
 
-|         | valid (WIP)    | channel         | format                 | filesize                   | dim                                             | quality (WIP)                 | aspect (WIP)         |
-| ------- | -------------- | --------------- | ---------------------- | -------------------------- | ----------------------------------------------- | ----------------------------- | -------------------- |
-|         | valid, invalid | rgb, rgba, gray | png, jpg (covers jpeg) | filesize, 50B, 300K, 10.5M | width, height, long, short, =, ==, >, <, >=, <= | q, >, >=, <, <=, =, ==, 1~100 | aspect, >, >=, <, <= |
-| any     |                | any RGBA        | any png                |                            |                                                 |                               |                      |
-| list    |                | list rgba       |                        |                            |                                                 | list q<80                     |                      |
-| count   |                | count           | count format           | count "filesize>10M"       | count "short>=512"                              |                               |                      |
-| remove  |                | remove gray     | remove !png !jpg       |                            | remove "width<512" height==100                  |                               | -                    |
-| convert |                |                 | convert jpg into png   |                            | convert long=512                                |                               |                      |
+|         |      | channel         | format                 | filesize                   | dim                                             | quality (WIP)                 | aspect (WIP)         |
+| ------- | ---- | --------------- | ---------------------- | -------------------------- | ----------------------------------------------- | ----------------------------- | -------------------- |
+|         |      | rgb, rgba, gray | png, jpg (covers jpeg) | filesize, 50B, 300K, 10.5M | width, height, long, short, =, ==, >, <, >=, <= | q, >, >=, <, <=, =, ==, 1~100 | aspect, >, >=, <, <= |
+| any     |      | any RGBA        | any png                |                            |                                                 |                               |                      |
+| list    |      | list rgba       |                        |                            |                                                 | list q<80                     |                      |
+| count   |      | count           | count format           | count "filesize>10M"       | count "short>=512"                              |                               |                      |
+| remove  |      | remove gray     | remove !png !jpg       |                            | remove "width<512" height==100                  |                               | -                    |
+| convert |      |                 | convert jpg into png   |                            | convert long=512                                |                               |                      |
 
 ## Incompletes
 
