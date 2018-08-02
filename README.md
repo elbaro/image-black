@@ -96,14 +96,10 @@ dim inequality cannot be used.
    2. `image-black remove "filesize>10M"` (overbloated)
    3. `image-black remove "short<512"` (too small)
    4. `image-black convert to rgb` or `image-black remove gray`  (default jpeg q = 75)
-2. Crop: SFD
-   1. Run SFD
-   2. Use the threshold score > 0.
-   3. exclude :overlapping faces
-   4. exclude: bbox touching the image boundary
-   5. Save only when `short>=128`
+2. Crop: MTCNN
+   1. Run MTCNN (it excludes overlapping faces / bbox touching the boundary)
+   2. Save only when `short>=128`
 3. NIMA
-4. 
 
 
 
