@@ -13,7 +13,6 @@ extern crate colored;
 use rayon::prelude::*;
 use walkdir::WalkDir;
 use image::DynamicImage;
-use image::GenericImage;
 use std::path::PathBuf;
 use std::path::Path;
 use std::error::Error;
@@ -22,6 +21,7 @@ use image::ImageDecoder;
 use atomic_counter::AtomicCounter;
 use colored::*;
 use std::io::Write;
+use image::GenericImageView;
 
 const USAGE: &'static str = "
 image-black
@@ -57,8 +57,8 @@ fn exit_with_usage() {
 }
 
 struct Metadata {
-    width: u32,
-    height: u32,
+    width: u64,
+    height: u64,
     color: image::ColorType,
 }
 
@@ -70,12 +70,12 @@ fn read_metadata<P: AsRef<Path>>(path: P) -> Result<Metadata, Box<Error>> {
         .map_or("<no ext>".to_string(), |s| s.to_ascii_lowercase());
     let (dim, color) = match ext.as_ref() {
         "png" => {
-            let mut d = image::png::PNGDecoder::new(r);
-            (d.dimensions()?, d.colortype()?)
+            let mut d = image::png::PNGDecoder::new(r)?;
+            (d.dimensions(), d.colortype())
         }
         "jpg" | "jpeg" => {
-            let mut d = image::jpeg::JPEGDecoder::new(r);
-            (d.dimensions()?, d.colortype()?)
+            let mut d = image::jpeg::JPEGDecoder::new(r)?;
+            (d.dimensions(), d.colortype())
         }
         format => {
             return Err(From::from(image::ImageError::UnsupportedError(format!(
@@ -369,7 +369,7 @@ fn main() {
                 let color = img.color();
                 ImageInfo {
                     path: p,
-                    meta: Some(Metadata{width:dim.0, height:dim.1, color:color}),
+                    meta: Some(Metadata{width:dim.0 as u64, height:dim.1 as u64, color:color}),
                     image: Some(img),
                 }
             } else if require_meta {
